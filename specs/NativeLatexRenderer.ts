@@ -17,4 +17,7 @@ export interface Spec extends TurboModule {
   }>;
 }
 
-export default TurboModuleRegistry.getEnforcing<Spec>('NativeLatexRenderer');
+// Nullable lookup: the native implementation currently exists only on
+// Android. getEnforcing would throw during bundle evaluation on iOS and
+// prevent the app from registering.
+export default TurboModuleRegistry.get<Spec>('NativeLatexRenderer');

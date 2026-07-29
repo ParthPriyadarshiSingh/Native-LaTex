@@ -26,14 +26,15 @@ const LatexImage = memo(({ expression, mode }: Props) => {
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    const renderer = NativeLatexRenderer;
+    if (!renderer) {
+      return;
+    }
     let isMounted = true;
     const render = async () => {
       try {
         const textSize = 16;
-        const result = await NativeLatexRenderer.renderLatex(
-          expression,
-          textSize,
-        );
+        const result = await renderer.renderLatex(expression, textSize);
         if (isMounted) setData(result);
       } catch (e) {
         if (isMounted) setError(true);
@@ -47,6 +48,12 @@ const LatexImage = memo(({ expression, mode }: Props) => {
 
   if (error) {
     return <Text style={styles.errorText}>[Invalid]</Text>;
+  }
+
+  // No native renderer on this platform (currently Android-only): show the
+  // raw LaTeX instead of blocking on a spinner that will never resolve.
+  if (!NativeLatexRenderer) {
+    return <Text style={styles.fallbackText}>{expression}</Text>;
   }
 
   if (!data) {
@@ -97,6 +104,11 @@ const styles = StyleSheet.create({
     color: 'red',
     fontSize: 12,
     backgroundColor: '#ffebeb',
+  },
+  fallbackText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: '#555',
   },
 });
 

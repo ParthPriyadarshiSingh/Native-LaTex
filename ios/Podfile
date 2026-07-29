@@ -17,6 +17,11 @@ end
 target 'LatexNative' do
   config = use_native_modules!
 
+  # LaTeX typesetting engine (Objective-C, CoreText based) — the iOS counterpart
+  # to JLaTeXMath on Android. :modular_headers => true makes CocoaPods generate a
+  # Clang module map for it so Swift can `import iosMath` without a bridging header.
+  pod 'iosMath', '~> 0.9.4', :modular_headers => true
+
   use_react_native!(
     :path => config[:reactNativePath],
     # An absolute path to your application root.
@@ -31,5 +36,17 @@ target 'LatexNative' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Xcode 26.4+ (Apple clang 21) rejects fmt 11's consteval format-string
+    # checks (https://github.com/facebook/react-native/issues/55601).
+    # fmt 11.0.2 ignores an external FMT_USE_CONSTEVAL, so build the fmt pod
+    # as C++17 where consteval doesn't exist and fmt uses runtime validation.
+    installer.pods_project.targets.each do |target|
+      if target.name == 'fmt'
+        target.build_configurations.each do |config|
+          config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+        end
+      end
+    end
   end
 end
